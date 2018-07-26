@@ -43,12 +43,6 @@ def build(inputs, labels, fcn_classes):
     conv5_3 = my_conv2d_layer(conv5_2, filters=512)
     pool5 = my_max_pooling2d_layer(conv5_3)
 
-
-
-
-
-
-
     pool3 = my_conv2d_layer(pool3, filters=fcn_classes, kernel_size=1, padding='valid')
     pool4 = my_conv2d_layer(pool4, filters=fcn_classes, kernel_size=1, padding='valid')
     pool5 = my_conv2d_layer(pool5, filters=fcn_classes, kernel_size=1, padding='valid')
