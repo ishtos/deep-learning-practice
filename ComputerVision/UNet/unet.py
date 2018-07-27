@@ -83,11 +83,4 @@ def unet(input_size=(256, 256, 1)):
     ## model
     model = Model(input=inputs, output=outputs)
 
-    ## compile
-    model.compile(optimizer=Adam(lr=1e-4),
-                  loss='binary_crossentropy', metrics=['accuracy'])
-
-    ## summary
-    model.summary()
-    
     return model
