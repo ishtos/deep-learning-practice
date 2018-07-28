@@ -86,14 +86,14 @@ class UNet:
        
         self.model = model
 
-    # dice
+    # dice loss helper
     def dice_coef(self, y, y_pred):
         y = K.flatten(y)
         y_pred = K.flatten(y_pred)
         intersection = K.sum(y * y_pred)
         return 2.0 * intersection / (K.sum(y) + K.sum(y_pred) + 1)
 
-    # loss
+    # dice loss
     def dice_coef_loss(self, y, y_pred):
         return 1.0 - self.dice_coef(y, y_pred)
 
