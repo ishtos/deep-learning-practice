@@ -9,8 +9,12 @@ from keras.layers.normalization import BatchNormalization
 from keras.utils import np_utils
 
 class SegNet:
+    """
+    without pool indices
+    """
 
-    def __init__(self, input_size=(256, 256, 3), classes=12):
+    def __init__(self, input_size=(360, 480, 3), classes=11):
+        self.input_size = input_size
         inputs = Input(input_size)
 
         # Encoder
@@ -26,9 +30,15 @@ class SegNet:
         ## layer4
         enc4 = self.encoder_layer(enc3, 512)
 
+        ## lyaer5
+        enc5 = self.encoder_layer(enc4, 512)
+
         # Decoder
+        ## layer6 
+        dec0 = self.decoder_layer(enc5, 512)
+
         ## layer5
-        dec1 = self.decoder_layer(enc4, 512)
+        dec1 = self.decoder_layer(dec0, 512)
 
         ## layer6
         dec2 = self.decoder_layer(dec1, 256)
@@ -50,7 +60,7 @@ class SegNet:
 
     def encoder_layer(self, x, filters):
         if filters == 64: 
-            x = Conv2D(filters, (3, 3), padding="same", input_shape=(256, 256, 3))(x)
+            x = Conv2D(filters, (3, 3), padding="same", input_shape=(360, 480))(x)
         else:
             x = Conv2D(filters, (3, 3), padding="same")(x)
         x = BatchNormalization()(x)
@@ -62,13 +72,15 @@ class SegNet:
             x = Conv2D(filters, (3, 3), padding="same")(x)
             x = BatchNormalization()(x)
             x = Activation("relu")(x)
-        x = MaxPooling2D(pool_size=(2, 2))(x)
+        if filters != 512:
+            x = MaxPooling2D(pool_size=(2, 2))(x)
 
         return x
 
 
     def decoder_layer(self, x, filters):
-        x = UpSampling2D(size=(2, 2))(x)
+        if filters != 512:
+            x = UpSampling2D(size=(2, 2))(x)
         x = Conv2D(filters, (3, 3), padding="same")(x)
         x = BatchNormalization()(x)
         x = Activation("relu")(x)
