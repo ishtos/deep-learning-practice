@@ -59,19 +59,10 @@ class SegNet:
         self.model = model
 
     def encoder_layer(self, x, filters):
-        if filters == 64: 
-            x = Conv2D(filters, (3, 3), padding="same", input_shape=(360, 480))(x)
-        else:
-            x = Conv2D(filters, (3, 3), padding="same")(x)
-        x = BatchNormalization()(x)
-        x = Activation("relu")(x)
-        x = Conv2D(filters, (3, 3), padding="same")(x)
-        x = BatchNormalization()(x)
-        x = Activation("relu")(x)
+        x = self.helper_layer(x, filters)
+        x = self.helper_layer(x, filters)
         if filters in (256, 512):
-            x = Conv2D(filters, (3, 3), padding="same")(x)
-            x = BatchNormalization()(x)
-            x = Activation("relu")(x)
+            x = self.helper_layer(x, filters)
         if filters != 512:
             x = MaxPooling2D(pool_size=(2, 2))(x)
 
@@ -81,19 +72,19 @@ class SegNet:
     def decoder_layer(self, x, filters):
         if filters != 512:
             x = UpSampling2D(size=(2, 2))(x)
-        x = Conv2D(filters, (3, 3), padding="same")(x)
-        x = BatchNormalization()(x)
-        x = Activation("relu")(x)
-        x = Conv2D(filters, (3, 3), padding="same")(x)
-        x = BatchNormalization()(x)
-        x = Activation("relu")(x)
+        x = self.helper_layer(x, filters)
+        x = self.helper_layer(x, filters)
         if filters in (256, 512):
-            x = Conv2D(filters, (3, 3), padding="same")(x)
-            x = BatchNormalization()(x)
-            x = Activation("relu")(x)
+            x = self.helper_layer(x, filters)
 
         return x
 
+    def helper_layer(self, x, filters):
+        x = Conv2D(filters, (3, 3), padding="same")(x)
+        x = BatchNormalization()(x)
+        x = Activation("relu")(x)
+
+        return x
 
     def output_layer(self, x, input_size, classes):
         x = Conv2D(classes, (1, 1), padding="valid")(x)
