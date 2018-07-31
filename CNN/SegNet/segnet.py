@@ -1,7 +1,7 @@
 import keras.backend as K
 from functools import partial
-from keras.models import Model, Input
-from keras.layers import Conv2D, UpSampling2D, MaxPooling2D, Dropout
+from keras.models import Model
+from keras.layers import Conv2D, UpSampling2D, MaxPooling2D, Dropout, Input
 from keras.layers import Concatenate
 from keras.optimizers import Adam
 from keras.layers.core import Activation, Flatten, Reshape, Permute
@@ -13,9 +13,8 @@ class SegNet:
     without pool indices
     """
 
-    def __init__(self, input_size=(360, 480, 3), classes=11):
-        self.input_size = input_size
-        inputs = Input(input_size)
+    def __init__(self, input_shape=(360, 480, 3), classes=11):
+        inputs = Input(shape=input_shape)
 
         # Encoder
         ## layer1
@@ -50,11 +49,11 @@ class SegNet:
         dec_5 = self.decoder_layer(dec_4, 64)
 
         ## outputs
-        outputs = self.output_layer(dec_5, input_size, classes)
+        outputs = self.output_layer(dec_5, input_shape, classes)
         
         ## model
-        model = Model(inptus=inputs, outputs=outputs)
-        model.compile(loss="categorical_crossentropy", optimizer='adadelta', metrics=["accuracy"])
+        model = Model(inputs=inputs, outputs=outputs, name="SegNet")
+        model.compile(loss="categorical_crossentropy", optimizer="adadelta", metrics=["accuracy"])
 
         self.model = model
 
