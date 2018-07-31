@@ -19,41 +19,41 @@ class SegNet:
 
         # Encoder
         ## layer1
-        enc1 = self.encoder_layer(inputs, 64)
+        enc_1 = self.encoder_layer(inputs, 64)
 
         ## layer2
-        enc2 = self.encoder_layer(enc1, 128)
+        enc_2 = self.encoder_layer(enc_1, 128)
 
         ## layer3
-        enc3 = self.encoder_layer(enc2, 256)
+        enc_3 = self.encoder_layer(enc_2, 256)
 
         ## layer4
-        enc4 = self.encoder_layer(enc3, 512)
+        enc_4 = self.encoder_layer(enc_3, 512)
 
         ## lyaer5
-        enc5 = self.encoder_layer(enc4, 512)
+        enc_5 = self.encoder_layer(enc_4, 512)
 
         # Decoder
         ## layer6 
-        dec0 = self.decoder_layer(enc5, 512)
+        dec_1 = self.decoder_layer(enc_5, 512)
 
         ## layer5
-        dec1 = self.decoder_layer(dec0, 512)
+        dec_2 = self.decoder_layer(dec_1, 512)
 
         ## layer6
-        dec2 = self.decoder_layer(dec1, 256)
+        dec_3 = self.decoder_layer(dec_2, 256)
 
         ## layer7
-        dec3 = self.decoder_layer(dec2, 128)
+        dec_4 = self.decoder_layer(dec_3, 128)
 
         ## layer8
-        dec4 = self.decoder_layer(dec3, 64)
+        dec_5 = self.decoder_layer(dec_4, 64)
 
         ## outputs
-        outputs = self.output_layer(dec4, input_size, classes)
+        outputs = self.output_layer(dec_5, input_size, classes)
         
         ## model
-        model = Model(inputs, outputs)
+        model = Model(inptus=inputs, outputs=outputs)
         model.compile(loss="categorical_crossentropy", optimizer='adadelta', metrics=["accuracy"])
 
         self.model = model
