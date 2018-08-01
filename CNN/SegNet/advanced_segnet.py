@@ -9,25 +9,27 @@ from AdvancedLayers import AdvancedMaxPooling2D, AdvancedUpSampling2D
 
 class SegNet:
     
-    def __init__(self, input_shape=(360, 480, 3), n_classes=11, kernel=3, pool_size=(2, 2)):
-        
+    def __init__(self):
+        pass
+
+
+    def build_graph(self, input_shape=(360, 480, 3), n_classes=11, kernel=3, pool_size=(2, 2)):
         inputs = Input(shape=input_shape)
 
         ## Encoder
         conv_1 = self.my_layer(inputs, 64)
         conv_2 = self.my_layer(conv_1, 64)
-    
+
         pool_1, mask_1 = AdvancedMaxPooling2D(pool_size)(conv_2)
 
         conv_3 = self.my_layer(pool_1, 128)
         conv_4 = self.my_layer(conv_3, 128)
-        
+
         pool_2, mask_2 = AdvancedMaxPooling2D(pool_size)(conv_4)
 
         conv_5 = self.my_layer(pool_2, 256)
         conv_6 = self.my_layer(conv_5, 256)
         conv_7 = self.my_layer(conv_6, 256)
- 
 
         pool_3, mask_3 = AdvancedMaxPooling2D(pool_size)(conv_7)
 
@@ -49,7 +51,7 @@ class SegNet:
         conv_14 = self.my_layer(upsamp_1, 512)
         conv_15 = self.my_layer(conv_14, 512)
         conv_16 = self.my_layer(conv_15, 512)
-        
+
         upsamp_2 = AdvancedUpSampling2D(pool_size)([conv_16, mask_4])
 
         conv_17 = self.my_layer(upsamp_2, 256)
@@ -73,15 +75,16 @@ class SegNet:
 
         conv_26 = Convolution2D(n_classes, (1, 1), padding="valid")(conv_25)
         conv_26 = BatchNormalization()(conv_26)
-        conv_26 = Reshape(target_shape=(input_shape[0] * input_shape[1], n_classes), 
+        conv_26 = Reshape(target_shape=(input_shape[0] * input_shape[1], n_classes),
                           input_shape=(input_shape[0], input_shape[1], n_classes))(conv_26)
 
         outputs = Activation("softmax")(conv_26)
 
         model = Model(inputs=inputs, outputs=outputs, name="SegNet")
-        model.compile(loss="categorical_crossentropy", optimizer='adadelta', metrics=["accuracy"])
+        model.compile(loss="categorical_crossentropy",
+                      optimizer='adadelta', metrics=["accuracy"])
 
-        self.model = model
+        return model
 
 
     def my_layer(self, x, filters, kernel=(3,3), padding='same'):  
@@ -90,9 +93,5 @@ class SegNet:
         x = Activation("relu")(x)
 
         return x
-
-
-    def segnet(self):
-        return self.model
 
    

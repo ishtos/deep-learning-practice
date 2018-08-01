@@ -13,7 +13,11 @@ class SegNet:
     without pool indices
     """
 
-    def __init__(self, input_shape=(360, 480, 3), classes=11):
+    def __init__(self):
+        pass
+
+
+    def build_graph(self, input_shape=(360, 480, 3), classes=11):
         inputs = Input(shape=input_shape)
 
         # Encoder
@@ -33,7 +37,7 @@ class SegNet:
         enc_5 = self.encoder_layer(enc_4, 512)
 
         # Decoder
-        ## layer6 
+        ## layer6
         dec_1 = self.decoder_layer(enc_5, 512)
 
         ## layer5
@@ -50,12 +54,14 @@ class SegNet:
 
         ## outputs
         outputs = self.output_layer(dec_5, input_shape, classes)
-        
+
         ## model
         model = Model(inputs=inputs, outputs=outputs, name="SegNet")
-        model.compile(loss="categorical_crossentropy", optimizer="adadelta", metrics=["accuracy"])
+        model.compile(loss="categorical_crossentropy",
+                      optimizer="adadelta", metrics=["accuracy"])
 
-        self.model = model
+        return model
+
 
     def encoder_layer(self, x, filters):
         x = self.helper_layer(x, filters)
@@ -78,12 +84,14 @@ class SegNet:
 
         return x
 
+
     def helper_layer(self, x, filters):
         x = Conv2D(filters, (3, 3), padding="same")(x)
         x = BatchNormalization()(x)
         x = Activation("relu")(x)
 
         return x
+
 
     def output_layer(self, x, input_size, classes):
         x = Conv2D(classes, (1, 1), padding="valid")(x)
@@ -93,7 +101,3 @@ class SegNet:
         x = Activation("softmax")(x)
 
         return x
-
-    
-    def segnet(self):
-        return self.model

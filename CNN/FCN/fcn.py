@@ -1,61 +1,65 @@
 from functools import partial
-import tensorflow as tf
+
+from keras.layers import Input, Concatenate, Add
+from keras.layers.core import Activation
+from keras.activations import softmax
+from keras.layers.convolutional import Conv2D, Conv2DTranspose, Cropping2D
+from keras.models import Model
+from keras import backend as K
+from keras.applications.vgg16 import VGG16, preprocess_input
 
 
-def build(inputs, labels, fcn_classes):
-    my_conv2d_layer = partial(tf.nn.conv2d,
-                              filters=64,
-                              kernel_size=3,
-                              strides=1,
-                              activation=tf.nn.relu,
-                              padding='same')
+class FCN:
 
-    my_deconv2d_layer = partial(tf.nn.conv2d,
-                                filters=fcn_classes,
-                                kernel_size=4,
-                                strides=2,
-                                padding='valid')
+    def __init__(self, input_shape=(224, 224, 3), fcn_classes=21):
+        self.input_shape = input_shape
+        self.fcn_classes = fcn_classes
+        self.vgg16 = VGG16(include_top=False,
+                           weights='imagenet',
+                           input_tensor=None,
+                           input_shape=input_shape)
 
-    my_max_pooling2d_layer = partial(tf.nn.max_pooling2d,
-                                    filters=2,
-                                    strides=2)
 
-    conv1_1 = my_conv2d_layer(inputs)
-    conv1_2 = my_conv2d_layer(conv1_1)
-    pool1 = my_max_pooling2d_layer(conv1_2)
+    def build_graph(self):
+        inputs = Input(shape=self.input_shape)
 
-    conv2_1 = my_conv2d_layer(max_pool1, filters=128)
-    conv2_2 = my_conv2d_layer(conv2_1, filters=128)
-    max_pool2 = my_max_pooling2d_layer(conv2_2)
+        h = self.vgg16.layers[1](inputs)
+        for i in range(2,11):
+            h = self.vgg16.layers[i](h)
 
-    conv3_1 = my_conv2d_layer(max_pool2, filters=256)
-    conv3_2 = my_conv2d_layer(conv3_1, filters=256)
-    conv3_3 = my_conv2d_layer(conv3_2, filters=256)
-    pool3 = my_max_pooling2d_layer(conv3_3)
+        p3 = h
+        for i in range(11, 15):
+            h = self.vgg16.layers[i](h)
+        
+        p4 = h
+        for i in range(15, 19):
+            h = self.vgg16.layers[i](h)
+        
+        p5 = h
 
-    conv4_1 = my_conv2d_layer(max_pool3, filters=512)
-    conv4_2 = my_conv2d_layer(conv4_1, filters=512)
-    conv4_3 = my_conv2d_layer(conv4_2, filters=512)
-    pool4 = my_max_pooling2d_layer(conv4_2)
+        p3 = Conv2D(self.fcn_classes, kernel_size=1, strides=1,
+                    activation='relu', padding='valid')(p3)
 
-    conv5_1 = my_conv2d_layer(max_pool4, filters=512)
-    conv5_2 = my_conv2d_layer(conv5_1, filters=512)
-    conv5_3 = my_conv2d_layer(conv5_2, filters=512)
-    pool5 = my_max_pooling2d_layer(conv5_3)
+        p4 = Conv2D(self.fcn_classes, kernel_size=1,
+                    strides=1, activation='relu')(p4)
+        p4 = Conv2DTranspose(self.fcn_classes, kernel_size=4,
+                             strides=2, padding='valid')(p4)
+        p4 = Cropping2D(((1, 1), (1, 1)))(p4)
 
-    pool3 = my_conv2d_layer(pool3, filters=fcn_classes, kernel_size=1, padding='valid')
-    pool4 = my_conv2d_layer(pool4, filters=fcn_classes, kernel_size=1, padding='valid')
-    pool5 = my_conv2d_layer(pool5, filters=fcn_classes, kernel_size=1, padding='valid')
+        p5 = Conv2D(self.fcn_classes, kernel_size=1,
+                    strides=1, activation='relu')(p5)
+        p5 = Conv2DTranspose(self.fcn_classes, kernel_size=8, 
+                             strides=4, padding='valid')(p5)
+        p5 = Cropping2D(((2, 2), (2, 2)))(p5)
 
-    deconv4 = my_deconv2d_layer(pool4, filters=fcn_classes, kernel_size=4, strides=2)
-    deconv4 = tf.keras.layers.Cropping2D(deconv4, (2, 2), (2, 2))
+        h = Add()([p3, p4, p5])
+        h = Conv2DTranspose(self.fcn_classes, kernel_size=16,
+                            strides=8, padding='valid')(h)
+        h = Cropping2D(((4, 4), (4, 4)))(h)
 
-    deconv5 = my_deconv2d_layer(pool5, filters=fcn_classes, skernel_size=8, strides=4)
-    deconv5 = tf.keras.layers.Cropping2D(deconv4, (2, 2), (2, 2))
+        outputs = Activation(softmax)(h)
 
-    merge = tf.add(pool3, deconv4, deconv5)
-    deconv = my_deconv2d_layer(merge, filters=fcn_classes, skernel_size=16, strides=8)
-    deconv = tf.keras.layers.Cropping2D(deconv, (4, 4), (4, 4))
+        model = Model(inputs=inputs, outputs=outputs, name="FCN")
+        model.compile(loss="categorical_crossentropy", optimizer='adadelta', metrics=["accuracy"])
 
-    output = tf.reshape(deconv, fcn_classes, 224*224)
-    loss = tf.nn.softmax_cross_entropy_with_logits_v2(labels=labels, logits=output, dim=fcn_classes)
+        return model
