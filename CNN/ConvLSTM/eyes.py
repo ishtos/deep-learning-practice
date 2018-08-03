@@ -30,14 +30,18 @@ class Eyes:
      
         l_6 = BatchNormalization()(l_5)
 
-        l_7 = ConvLSTM2D(filters=40, kernel_size=(3, 3),
-                         padding='same', return_sequences=True)(l_6)
+        lstm_outputs = ConvLSTM2D(filters=40, kernel_size=(3, 3),
+                                 padding='same', return_sequences=False, name='lstm_outputs')(l_6)
 
-        l_8 = BatchNormalization()(l_7)
 
-        l_9 = Conv3D(filters=1, kernel_size=(3, 3, 3),
-                     activation='sigmoid',
-                     padding='same')(l_8)
+        l_8 = BatchNormalization()(lstm_outputs)
+
+        # l_9 = Conv3D(filters=1, kernel_size=(3, 3, 3),
+        #              activation='sigmoid',
+        #              padding='same')(l_8)
+
+        l_9 = Conv2D(32, kernel_size=(3, 3),
+                      activation='relu')(l_8)
 
         l_10 = Conv2D(32, kernel_size=(3, 3),
                       activation='relu')(l_9)
@@ -55,9 +59,11 @@ class Eyes:
 
         l_16 = Dropout(0.5)(l_15)
 
-        outputs = Dense(num_classes, activation='softmax')
+        cnn_outputs = Dense(num_classes, activation='softmax', name='cnn_outputs')(l_16)
 
-        model = Model(inputs=inputs, outputs=outputs, name='Eyes')
-        model.compile(loss='categorical_crossentropy', optimizer='adadelta')
+        model = Model(inputs=inputs, outputs=[lstm_outputs, cnn_outputs], name='Eyes')
+        model.compile(optimizer='adadelta',
+                      loss={'lstm_outputs': 'binary_crossentropy', 'cnn_outputs': 'categorical_crossentropy'},
+                      loss_weights={'lstm_outputs': 0.8, 'cnn_outputs': 1.0})
 
         return model
