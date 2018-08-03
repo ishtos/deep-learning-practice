@@ -36,30 +36,23 @@ class Eyes:
 
         l_8 = BatchNormalization()(lstm_outputs)
 
-        # l_9 = Conv3D(filters=1, kernel_size=(3, 3, 3),
-        #              activation='sigmoid',
-        #              padding='same')(l_8)
-
         l_9 = Conv2D(32, kernel_size=(3, 3),
                       activation='relu')(l_8)
 
         l_10 = Conv2D(32, kernel_size=(3, 3),
                       activation='relu')(l_9)
-        
-        l_11 = Conv2D(64, kernel_size=(3, 3),
-                      activation='relu')(l_10)
 
-        l_12 = MaxPooling2D(pool_size=(2, 2))(l_11)
+        l_11 = MaxPooling2D(pool_size=(2, 2))(l_10)
 
-        l_13 = Dropout(0.25)(l_12)
+        l_12 = Dropout(0.25)(l_11)
 
-        l_14 = Flatten()(l_13)
+        l_13 = Flatten()(l_12)
 
-        l_15 = Dense(128, activation='relu')(l_14)
+        l_14 = Dense(128, activation='relu')(l_13)
 
-        l_16 = Dropout(0.5)(l_15)
+        l_15 = Dropout(0.5)(l_14)
 
-        cnn_outputs = Dense(num_classes, activation='softmax', name='cnn_outputs')(l_16)
+        cnn_outputs = Dense(num_classes, activation='softmax', name='cnn_outputs')(l_15)
 
         model = Model(inputs=inputs, outputs=[lstm_outputs, cnn_outputs], name='Eyes')
         model.compile(optimizer='adadelta',
