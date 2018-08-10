@@ -5,6 +5,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import gc
 
+from keras.callbacks import TensorBoard
 from keras.callbacks import EarlyStopping
 from keras.utils import plot_model
 
@@ -49,13 +50,14 @@ def main(args):
     model.summary()
     plot_model(model, to_file='model.png')
 
+    tensorboard = TensorBoard(log_dir=args.log_path, histogram_freq=10)
     earlystop = EarlyStopping(monitor='val_loss', min_delta=0,
                               patience=0, verbose=1, mode='auto')
     history = model.fit(x=train_x, y=train_y, epochs=args.epochs,
                         verbose=1, batch_size=args.batch_size,
                         validation_split=0.5, callbacks=[earlystop])
     model.save_weights(args.save_weights)
-    
+
     result = model.predict(test[:10])
     imshow(result)
 
@@ -67,6 +69,7 @@ def parse_arguments(argv):
     parser.add_argument('--test_size', type=int, default=9)
     parser.add_argument('--batch_size', type=int, default=10)
     parser.add_argument('--epochs', type=int, default=100)
+    parser.add_argument('--log_path', type=str, default='./logs/')
     parser.add_argument('--save_weights', type=str, default='my_model_weights.h5')
 
     return parser.parse_args(argv)
