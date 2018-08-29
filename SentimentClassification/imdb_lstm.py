@@ -43,7 +43,7 @@ def main(args):
 
     logger.debug('Train ...')
 
-    earlystopping = EarlyStopping(monitor='val_loss', patience=1)
+    earlystopping = EarlyStopping(monitor='val_acc', patience=5)
     tensorboard = TensorBoard(log_dir='./logs', histogram_freq=32, batch_size=32, 
                               write_graph=False, write_grads=False, write_images=False)
 
