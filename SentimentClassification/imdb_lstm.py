@@ -21,18 +21,14 @@ logger.addHandler(handler)
 
 
 def main(args):
-    max_features = args.max_features
-    max_len = args.max_len
-    batch_size = args.batch_size
-
     logger.debug('Loading data...')
     (x_train, y_train), (x_test, y_test) = imdb.load_data(num_words=args.max_features)
     logger.debug('train sequences: {}'.format(len(x_train)))
     logger.debug('test sequences: {}'.format(len(x_test)))
 
     logger.debug('Pad sequences (samples x time)')
-    x_train = sequence.pad_sequences(x_train, maxlen=max_len)
-    x_test = sequence.pad_sequences(x_test, maxlen=max_len)
+    x_train = sequence.pad_sequences(x_train, maxlen=args.max_len)
+    x_test = sequence.pad_sequences(x_test, maxlen=args.max_len)
     
     logger.debug('x_train shape: {}'.format(x_train.shape))
     logger.debug('x_test shape: {}'.format(x_test.shape))
@@ -48,13 +44,13 @@ def main(args):
                               write_graph=False, write_grads=False, write_images=False)
 
     model.fit(x_train, y_train,
-              batch_size=batch_size,
+              batch_size=args.batch_size,
               epochs=args.epoch_size,
               validation_data=(x_test, y_test),
               callbacks=[earlystopping, tensorboard])
 
     score, acc = model.evaluate(x_test, y_test,
-                                batch_size=batch_size)
+                                batch_size=args.batch_size)
 
     logger.debug('Test score: {}'.format(score))
     logger.debug('Test accuracy {}'.format(acc))
