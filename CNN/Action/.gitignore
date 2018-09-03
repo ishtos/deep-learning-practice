@@ -1,3 +1,7 @@
-mnist_test_seq.npy
-sample.mov
+*.mov
+*.avi
+*.npy
 .DS_Store
+preprocess_.py
+haarcascades/*
+img/*

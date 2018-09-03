@@ -24,8 +24,9 @@ while(1):
     if k == 27:
         break
     elif k == ord('s'):
-        cv2.imwrite('opticalfb.png', frame2)
-        cv2.imwrite('opticalhsv.png', rgb)
+        pass
+        # cv2.imwrite('opticalfb.png', frame2)
+        # cv2.imwrite('opticalhsv.png', rgb)
     prvs = next
 
 cap.release()
