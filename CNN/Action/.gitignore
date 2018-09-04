@@ -1,7 +1,7 @@
 *.mov
 *.avi
 *.npy
-.DS_Store
+*.DS_Store
 preprocess_.py
 haarcascades/*
 img/*
