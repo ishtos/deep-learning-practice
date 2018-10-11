@@ -12,15 +12,15 @@ from keras.preprocessing import image
 latent_dim = 28
 height = 28
 width = 28
-channels = 3
+channels = 1
 
 
 def build_generator():
-    generator_input = keras.Input(shape=(latent_dim))
+    generator_input = keras.Input(shape=(latent_dim,))
 
-    x = layers.Dense(128 * 16 * 16)(generator_input)
+    x = layers.Dense(128 * 14 * 14)(generator_input)
     x = layers.LeakyReLU()(x)
-    x = layers.Reshape((16, 16, 128))(x)
+    x = layers.Reshape((14, 14, 128))(x)
 
     x = layers.Conv2D(256, 5, padding='same')(x)
     x = layers.LeakyReLU()(x)
@@ -56,7 +56,7 @@ def build_discriminator():
 
     x = layers.Dropout(0.4)(x)
 
-    x = layers.Dense()(1, activation='sigmoid')(x)
+    x = layers.Dense(1, activation='sigmoid')(x)
 
     discriminator = keras.models.Model(discriminator_input, x)
     # discriminator.summary() 
@@ -89,7 +89,6 @@ def build_gan():
 
 def main(args):
     (x_train, y_train), (_, _) = mnist.load_data()
-    x_train = x_train[y_train.flatten() == 1] 
 
     x_train = x_train.reshape((x_train.shape[0],) + (height, width, channels)).astype('float32') / 255.
 
