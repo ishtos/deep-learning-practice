@@ -33,7 +33,7 @@ def build_generator():
     x = layers.Conv2D(256, 5, padding='same')(x)
     x = layers.LeakyReLU()(x)
 
-    x = layers.Conv2D(channels, 7,activation='tanh', padding='same')(x)
+    x = layers.Conv2D(channels, 7, activation='tanh', padding='same')(x)
 
     generator = keras.models.Model(generator_input, x)
     # generator.summary()
@@ -88,7 +88,7 @@ def build_gan():
 
 
 def main(args):
-    (x_train, y_train), (_, _) = mnist.load_data()
+    (x_train, _), (_, _) = mnist.load_data()
 
     x_train = x_train.reshape((x_train.shape[0],) + (height, width, channels)).astype('float32') / 255.
 
@@ -128,7 +128,7 @@ def main(args):
         if start > len(x_train) - batch_size:
             start = 0
         
-        if step % 1000 == 0:
+        if step % 100 == 0:
             gan.save_weights('gan.h5')
 
             print('discriminator loss at step %s: %s' % (step, d_loss))
@@ -144,7 +144,7 @@ def main(args):
 def parse_arguments(argv):
     parser = argparse.ArgumentParser()
 
-    parser.add_argument('--iterations', type=int, default=10000)
+    parser.add_argument('--iterations', type=int, default=1000)
     parser.add_argument('--batch_size', type=int, default=20)
     parser.add_argument('--save_dir', type=str, default='./logs')
 
