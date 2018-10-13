@@ -13,28 +13,26 @@ latent_dim = 28
 height = 28
 width = 28
 channels = 1
-
+CLASS_NUM = 10
 
 def build_generator():
-    generator_input = keras.Input(shape=(latent_dim, class_num))
+    generator_input = keras.Input(shape=(latent_dim, CLASS_NUM))
 
     x = layers.Dense(1024)(generator_input)
-    x = layers.LeakyReLU()(x)
-    x = layers.Reshape((14, 14, 128))(x)
-
-    # x = layers.Conv2D(256, 5, padding='same')(x)
-    # x = layers.LeakyReLU()(x)
-
-    x = layers.Conv2DTranspose(64, 4, strides=2, padding='same')(x)
-    x = layers.LeakyReLU()(x)
-
-    # x = layers.Conv2D(256, 5, padding='same')(x)
-    # x = layers.LeakyReLU()(x)
-    x = layers.Conv2D(64, 5, padding='same')(x)
-    x = layers.LeakyReLU()(x)
-
-    x = layers.Conv2D(channels, 5, activation='tanh', padding='same')(x)
-
+    x = layers.BatchNormalization()(x)
+    x = layers.ReLU()(x)
+    x = layers.Dense(7 * 7 * 128)
+    x = layers.BatchNormalization()(x)
+    x = layers.Activation('relu')(x)
+    x = layers.Reshape((7, 7, 128))(x)
+    x = layers.UpSampling2D(2, 2)(x)
+    x = layers.Conv2D(64, 5, 5, padding='same')
+    x = layers.BatchNormalization()
+    x = layers.Activation('relu')(x)
+    x = layers.UpSampling2D(2, 2)(x)
+    x = layers.Conv2D(1, 5, 5, padding='same')
+    x = layers.Activation('tanh')(x)
+    
     generator = keras.models.Model(generator_input, x)
     # generator.summary()
 
@@ -42,28 +40,19 @@ def build_generator():
 
 
 def build_discriminator():
-    discriminator_input = layers.Input(shape=(height, width, channels))
+    discriminator_input = layers.Input(shape=(height, width, channels+CLASS_NUM))
 
-    x = layers.Conv2D(128, 3)(discriminator_input)
-    x = layers.LeakyReLU()(x)
-    # x = layers.Conv2D(128, 4, strides=2)(x)
-    # x = layers.LeakyReLU()(x)
-    x = layers.Conv2D(128, 4, strides=2)(x)
-    x = layers.LeakyReLU()(x)
-    x = layers.Conv2D(128, 4, strides=2)(x)
-    x = layers.LeakyReLU()(x)
+    x = layers.Conv2D(64, 5, 5, stides=2, padding='same')(discriminator_input)
+    x = layers.LeakyReLU(0.2)(x)
     x = layers.Flatten()(x)
-
-    x = layers.Dropout(0.4)(x)
-    x = layers.Dense(1, activation='sigmoid')(x)
+    x = layers.Dense(256)(x)
+    x = layers.LeakyReLU(0.2)(x)
+    x = layers.Dropout(0.5)(x)
+    x = layers.Dense(1)(x)
+    x = layers.Activation('sigmoid')
 
     discriminator = keras.models.Model(discriminator_input, x)
     # discriminator.summary()
-
-    discriminator_optimizer = keras.optimizers.RMSprop(
-        lr=0.0008, clipvalue=1.0, decay=1e-8)
-    discriminator.compile(optimizer=discriminator_optimizer,
-                          loss='binary_crossentropy')
 
     return discriminator
 
@@ -72,25 +61,30 @@ def build_gan():
     generator = build_generator()
     discriminator = build_discriminator()
 
+    gan_input = keras.Input(shape=(latent_dim,))
+    gan_label_input = keras.Input(shape=(CLASS_NUM,))
+    gan_concat_input = layers.Concatenate(axis=-1)([gan_input, gan_label_input])
+    gan_generator_output = generator(gan_concat_input)
+    gan_image_input = keras.Input(shape=(height, width, CLASS_NUM))
+    gan_concat_image_input = layers.Concatenate(axis=3)([gan_generator_output, gan_image_input])
+
     discriminator.trainable = False
-
-    gan_input = keras.Input(shape=(latent_dim, ))
-    gan_output = discriminator(generator(gan_input))
-    gan = keras.models.Model(gan_input, gan_output)
-
-    gan_optimizer = keras.optimizers.RMSprop(
-        lr=0.0004, clipvalue=1.0, decay=1e-8)
-    gan.compile(optimizer=gan_optimizer,
-                loss='binary_crossentropy')
+    gan_discriminator_output = discriminator(gan_concat_image_input)
+    gan = keras.models.Model([gan_input, gan_label_input, gan_image_input], gan_discriminator_output)
 
     return gan
 
 
-def main(args):
-    (x_train, _), (_, _) = mnist.load_data()
+def label2image(label):
+    images = np.zeros((height, width, CLASS_NUM))
+    images[:, :, label] += 1
+    
+    return images
 
-    x_train = x_train.reshape(
-        (x_train.shape[0],) + (height, width, channels)).astype('float32') / 255.
+def main(args):
+    (x_train, y_train), (_, _) = mnist.load_data()
+
+    x_train = x_train.reshape(x_train.shape[0], height, width, channels).astype('float32') / 255.
 
     iterations = args.iterations
     batch_size = args.batch_size
@@ -98,18 +92,33 @@ def main(args):
     save_dir = args.save_dir
 
     generator = build_generator()
+
     discriminator = build_discriminator()
+    discriminator_optimizer = keras.optimizers.Adam(lr=0.0008, decay=1e-8)
+    discriminator.compile(optimizer=discriminator_optimizer, loss='binary_crossentropy')
+    
     gan = build_gan()
+    gan_optimizer = keras.optimizers.Adam(lr=0.0004, decay=1e-8)
+    gan.compile(optimizer=gan_optimizer, loss='binary_crossentropy')
 
     start = 0
     for step in tqdm(range(iterations)):
         random_latent_vectors = np.random.normal(size=(batch_size, latent_dim))
+        random_labels = np.random.randint(0, CLASS_NUM, batch_size)
+        random_labels_vectors = keras.utils.to_categorical(random_labels, CLASS_NUM)
+        random_vectors = np.concatenate([random_labels_vectors, random_labels_vectors], axis=1)
 
-        generated_iamges = generator.predict(random_latent_vectors)
+        generated_iamges = generator.predict(random_vectors)
+        random_labels_images = np.array([label2image(i) for i in random_labels])
+        generated_concat_iamges = np.concatenate((generated_iamges, random_labels_images), axis=3)
 
         stop = start + batch_size
         real_images = x_train[start:stop]
-        combined_images = np.concatenate([generated_iamges, real_images])
+        real_labels = y_train[start:stop]
+        real_labels_images = np.array([label2image(i) for i in real_labels])
+        real_concat_images = np.concatenate((real_images, real_labels_images), axis=3)
+
+        combined_images = np.concatenate([generated_concat_iamges, real_concat_images])
 
         labels = np.concatenate([np.ones((batch_size, 1)),
                                  np.zeros((batch_size, 1))])
