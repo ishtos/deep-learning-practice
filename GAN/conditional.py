@@ -31,6 +31,7 @@ def build_generator():
     x = layers.Activation('relu')(x)
     x = layers.UpSampling2D((2, 2))(x)
     x = layers.Conv2D(1, 5, padding='same')(x)
+    x = layers.Dropout(0.5)(x)
     x = layers.Activation('tanh')(x)
     
     generator = keras.models.Model(generator_input, x)
@@ -93,11 +94,11 @@ def main(args):
 
     generator = build_generator()
     discriminator = build_discriminator()
-    discriminator_optimizer = keras.optimizers.Adam(lr=0.0008, decay=1e-8)
+    discriminator_optimizer = keras.optimizers.Adam(lr=0.1, decay=1.00004)
     discriminator.compile(optimizer=discriminator_optimizer, loss='binary_crossentropy')
     
     gan = build_gan()
-    gan_optimizer = keras.optimizers.Adam(lr=0.0004, decay=1e-8)
+    gan_optimizer = keras.optimizers.Adam(lr=0.1, decay=1.00004)
     gan.compile(optimizer=gan_optimizer, loss='binary_crossentropy')
 
     start = 0
