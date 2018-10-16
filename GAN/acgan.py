@@ -90,7 +90,6 @@ def build_combined(latent_dim, generator, discriminator):
 
     fake_image = generator([latent_input, class_input])
 
-    discriminator.trainable = False
     fake, aux = discriminator(fake_image)
     combined = Model(input=[latent_input, class_input], output=[fake, aux])
 
@@ -114,6 +113,7 @@ def main(args):
         loss='binary_crossentropy'
     )
 
+    discriminator.trainable = False
     combined = build_combined(latent_dim, generator, discriminator)
     combined.compile(
         optimizer=Adam(lr=0.0002, beta_1=0.5),
