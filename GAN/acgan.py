@@ -183,7 +183,7 @@ def main(args):
 
         discriminator_train_loss = np.mean(np.array(epoch_disc_loss), axis=0)
 
-        noise = np.random.normal(size=(2 * nb_train, latent_dim))
+        noise = np.random.normal(size=(2 * nb_test, latent_dim))
         # noise = np.random.uniform(-1, 1, (2 * nb_test, latent_dim))
         sampled_labels = np.random.randint(0, 10, 2 * nb_test)
 
