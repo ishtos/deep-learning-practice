@@ -1,11 +1,13 @@
 import os
+import numpy as np
 from keras.optimizers import Adam
 from keras.utils.np_utils import to_categorical
 from collections import defaultdict
 from tqdm import tqdm
-from .build import build_discriminator, build_generator, build_gan
-from .load_data import load_fashion_mnist
+from build import build_discriminator, build_generator, build_gan
+from load_data import load_fashion_mnist
 import argparse
+from PIL import Image
 
 
 np.random.seed(2018)
@@ -56,7 +58,7 @@ def process_generator(gan, batch_size, latent_size, is_train=True):
     return loss
 
 
-def generate_100images(generator):
+def generate_100images(generator, latent_size):
     noise = np.random.normal(
         loc=0.0, scale=0.5, size=(100, latent_size))
     sampled_labels = np.array([[i] * 10 for i in range(10)]).flatten()
@@ -184,12 +186,12 @@ def main(args):
             LOG_PATH, 'params_discriminator_epoch_{0:03d}.hdf5'.format(epoch)), True)
 
         # generate some digits to display
-        img = generate_100images(generator)
+        img = generate_100images(generator, latent_size)
         img_path = os.path.join(
             LOG_PATH, 'plot_epoch_{0:03d}_generated.png'.format(epoch))
         Image.fromarray(img).save(img_path)
 
 
 if __name__ == '__main__':
-    os.makedir(LOG_PATH, exist_ok=True)
+    os.makedirs(LOG_PATH, exist_ok=True)
     main(args)

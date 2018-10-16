@@ -100,7 +100,7 @@ def build_gan(generator, discriminator, latent_size=100, label_size=10):
     gan_label = Input(shape=(label_size,), name='gan_label')
     gan_generator_output = generator([gan_latent, gan_label])
 
-    discriminator.trainable = True
+    discriminator.trainable = False
     gan_discriminator_output, gan_auxiliary_output = discriminator(
         gan_generator_output)
 
