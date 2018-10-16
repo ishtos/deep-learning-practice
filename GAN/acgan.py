@@ -9,13 +9,7 @@ from PIL import Image
 import keras
 import keras.backend as K
 from keras import layers
-from keras.datasets import mnist
-from keras.layers import Input, Dense, Reshape, Flatten, Embedding, merge, Dropout
-from keras.layers.advanced_activations import LeakyReLU
-from keras.layers.convolutional import UpSampling2D, Convolution2D
-from keras.models import Sequential, Model
-from keras.optimizers import Adam
-from keras.utils.generic_utils import Progbar
+
 
 K.set_image_dim_ordering('th')
 
@@ -103,33 +97,31 @@ def main(args):
 
     discriminator = build_discriminator()
     discriminator.compile(
-        optimizer=Adam(lr=0.0002, beta_1=0.5),
+        optimizer=keras.optimizers.Adam(lr=0.0002, beta_1=0.5),
         loss=['binary_crossentropy', 'sparse_categorical_crossentropy']
     )
 
     generator = build_generator(latent_dim)
     generator.compile(
-        optimizer=Adam(lr=0.0002, beta_1=0.5),
+        optimizer=keras.optimizers.Adam(lr=0.0002, beta_1=0.5),
         loss='binary_crossentropy'
     )
 
     discriminator.trainable = False
     combined = build_combined(latent_dim, generator, discriminator)
     combined.compile(
-        optimizer=Adam(lr=0.0002, beta_1=0.5),
+        optimizer=keras.optimizers.Adam(lr=0.0002, beta_1=0.5),
         loss=['binary_crossentropy', 'sparse_categorical_crossentropy']
     )
 
-    # get our mnist data, and force it to be of shape (..., 1, 28, 28) with
-    # range [-1, 1]
-    (X_train, y_train), (X_test, y_test) = mnist.load_data()
-    X_train = (X_train.astype(np.float32) - 127.5) / 127.5
-    X_train = np.expand_dims(X_train, axis=1)
+    (x_train, y_train), (x_test, y_test) = keras.datasets.mnist.load_data()
+    x_train = (x_train.astype(np.float32) - 127.5) / 127.5
+    x_train = np.expand_dims(x_train, axis=1)
 
-    X_test = (X_test.astype(np.float32) - 127.5) / 127.5
-    X_test = np.expand_dims(X_test, axis=1)
+    x_test = (x_test.astype(np.float32) - 127.5) / 127.5
+    x_test = np.expand_dims(x_test, axis=1)
 
-    nb_train, nb_test = X_train.shape[0], X_test.shape[0]
+    nb_train, nb_test = x_train.shape[0], x_test.shape[0]
 
     train_history = defaultdict(list)
     test_history = defaultdict(list)
@@ -137,8 +129,8 @@ def main(args):
     for epoch in range(epochs):
         print('Epoch {} of {}'.format(epoch + 1, epochs))
 
-        nb_batches = int(X_train.shape[0] / batch_size)
-        progress_bar = Progbar(target=nb_batches)
+        nb_batches = int(x_train.shape[0] / batch_size)
+        progress_bar = utils.generic_utils.Progbar(target=nb_batches)
 
         epoch_gen_loss = []
         epoch_disc_loss = []
@@ -149,7 +141,7 @@ def main(args):
             noise = np.random.uniform(-1, 1, (batch_size, latent_dim))
 
             # get a batch of real images
-            image_batch = X_train[index * batch_size:(index + 1) * batch_size]
+            image_batch = x_train[index * batch_size:(index + 1) * batch_size]
             label_batch = y_train[index * batch_size:(index + 1) * batch_size]
 
             # sample some labels from p_c
@@ -195,7 +187,7 @@ def main(args):
         generated_images = generator.predict(
             [noise, sampled_labels.reshape((-1, 1))], verbose=False)
 
-        X = np.concatenate((X_test, generated_images))
+        X = np.concatenate((x_test, generated_images))
         y = np.array([1] * nb_test + [0] * nb_test)
         aux_y = np.concatenate((y_test, sampled_labels), axis=0)
 
