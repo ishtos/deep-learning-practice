@@ -24,7 +24,7 @@ def process_discriminator(generator, discriminator, images, labels, batch_size, 
     noise = np.random.normal(
         loc=0.0, scale=0.5, size=(batch_size, latent_size))
     sampled_labels = np.random.randint(0, 10, batch_size)
-    sampled_labels = to_categorical(sampled_labels)
+    sampled_labels = to_categorical(sampled_labels, nb_classes=CLASS_NUM)
 
     generated_images = generator.predict(
         [noise, sampled_labels], verbose=False)
@@ -45,7 +45,7 @@ def process_generator(gan, batch_size, latent_size, is_train=True):
     noise = np.random.normal(
         loc=0.0, scale=0.5, size=(2 * batch_size, latent_size))
     sampled_labels = np.random.randint(0, 10, 2 * batch_size)
-    sampled_labels = to_categorical(sampled_labels)
+    sampled_labels = to_categorical(sampled_labels, nb_classes=CLASS_NUM)
 
     trick = np.ones(2 * batch_size)
 
@@ -62,7 +62,7 @@ def generate_100images(generator, latent_size):
     noise = np.random.normal(
         loc=0.0, scale=0.5, size=(100, latent_size))
     sampled_labels = np.array([[i] * 10 for i in range(10)]).flatten()
-    sampled_labels = to_categorical(sampled_labels)
+    sampled_labels = to_categorical(sampled_labels, nb_classes=CLASS_NUM)
 
     generated_images = generator.predict(
         [noise, sampled_labels], verbose=False)
