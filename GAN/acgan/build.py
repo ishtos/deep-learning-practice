@@ -33,7 +33,7 @@ def build_generator(latent_size=100, label_size=10):
                                         name='generator_deconv2')(generator_batchnorm1)
     generator_batchnorm2 = BatchNormalization(name='generator_batchnorm2',
                                               )(generator_deconv2)
-    generator_output = Conv2DTranspose(filters=1, kernel_size=2, strides=1,
+    generator_output = Conv2DTranspose(filters=1, kernel_size=5, strides=1,
                                        padding='same', activation='tanh',
                                        kernel_initializer='glorot_normal',
                                        name='generator_output')(generator_batchnorm2)
@@ -72,19 +72,19 @@ def build_discriminator():
                                                   )(discriminator_leakyrelu3)
     discriminator_dropout3 = Dropout(0.5, name='discriminator_dropout3',
                                      )(discriminator_batchnorm3)
-    discriminator_conv4 = Conv2D(filters=128, kernel_size=3, strides=1,
-                                 padding='valid', kernel_initializer='glorot_normal',
-                                 name='discriminator_conv4')(discriminator_dropout3)
-    discriminator_leakyrelu4 = LeakyReLU(alpha=0.2,
-                                         name='discriminator_leakyrelu4')(discriminator_conv4)
-    discriminator_batchnorm4 = BatchNormalization(name='discriminator_batchnorm4',
-                                                  )(discriminator_leakyrelu4)
-    discriminator_dropout4 = Dropout(0.5, name='discriminator_dropout4',
-                                     )(discriminator_batchnorm4)
+    #discriminator_conv4 = Conv2D(filters=128, kernel_size=3, strides=1,
+    #                             padding='valid', kernel_initializer='glorot_normal',
+    #                             name='discriminator_conv4')(discriminator_dropout3)
+    #discriminator_leakyrelu4 = LeakyReLU(alpha=0.2,
+    #                                     name='discriminator_leakyrelu4')(discriminator_conv4)
+    #discriminator_batchnorm4 = BatchNormalization(name='discriminator_batchnorm4',
+    #                                              )(discriminator_leakyrelu4)
+    #discriminator_dropout4 = Dropout(0.5, name='discriminator_dropout4',
+    #                                 )(discriminator_batchnorm4)
 
     # linear
     discriminator_flatten = Flatten(name='discriminator_flatten'
-                                    )(discriminator_dropout4)
+                                    )(discriminator_dropout3)
     discriminator_output = Dense(1, activation='sigmoid',
                                  name='discriminator_output')(discriminator_flatten)
     auxiliary_output = Dense(10, activation='softmax',

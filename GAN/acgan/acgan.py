@@ -22,7 +22,7 @@ LOG_PATH = './log'
 
 def process_discriminator(generator, discriminator, images, labels, batch_size, latent_size, is_train=True):
     noise = np.random.normal(
-        loc=0.0, scale=0.5, size=(batch_size, latent_size))
+        loc=0.0, scale=1.0, size=(batch_size, latent_size))
     sampled_labels = np.random.randint(0, 10, batch_size)
     sampled_labels = to_categorical(sampled_labels, num_classes=CLASS_NUM)
 
@@ -43,7 +43,7 @@ def process_discriminator(generator, discriminator, images, labels, batch_size, 
 
 def process_generator(gan, batch_size, latent_size, is_train=True):
     noise = np.random.normal(
-        loc=0.0, scale=0.5, size=(2 * batch_size, latent_size))
+        loc=0.0, scale=1.0, size=(2 * batch_size, latent_size))
     sampled_labels = np.random.randint(0, 10, 2 * batch_size)
     sampled_labels = to_categorical(sampled_labels, num_classes=CLASS_NUM)
 
@@ -60,7 +60,7 @@ def process_generator(gan, batch_size, latent_size, is_train=True):
 
 def generate_100images(generator, latent_size):
     noise = np.random.normal(
-        loc=0.0, scale=0.5, size=(100, latent_size))
+        loc=0.0, scale=1.0, size=(100, latent_size))
     sampled_labels = np.array([[i] * 10 for i in range(10)]).flatten()
     sampled_labels = to_categorical(sampled_labels, num_classes=CLASS_NUM)
 
@@ -82,7 +82,7 @@ def main(args):
     latent_size = args.latent_size
     label_size = CLASS_NUM
 
-    lr = 0.0002
+    lr = 0.0001
     beta_1 = 0.5
 
     # build the discriminator
