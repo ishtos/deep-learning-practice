@@ -5,7 +5,7 @@ from keras.utils.np_utils import to_categorical
 from collections import defaultdict
 from tqdm import tqdm
 from build import build_discriminator, build_generator, build_gan
-from load_data import load_fashion_mnist
+from load_data import load_mnist
 import argparse
 from PIL import Image
 
@@ -118,7 +118,7 @@ def main(args):
     gan.summary()
 
     # fashion_mnist, shape (..., 28, 28, 1) with range [-1, 1]
-    (X_train, y_train), (X_test, y_test) = load_fashion_mnist()
+    (X_train, y_train), (X_test, y_test) = load_mnist()
     num_train, num_test = X_train.shape[0], X_test.shape[0]
 
     train_history = defaultdict(list)

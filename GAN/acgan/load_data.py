@@ -1,12 +1,16 @@
 import numpy as np
 from keras.datasets import fashion_mnist
 from keras.utils.np_utils import to_categorical
+from keras.datasets import mnist
 
+def load_mnist(is_fashion=False):
+    if is_fashion:
+        print('Load fashion_mnist...')
+        (X_train, y_train), (X_test, y_test) = fashion_mnist.load_data()
+    else:
+        print('Load mnist...')
+        (X_train, y_train), (X_test, y_test) = mnist.load_data()
 
-def load_fashion_mnist():
-    print('Load fashion_mnist...')
-
-    (X_train, y_train), (X_test, y_test) = fashion_mnist.load_data()
     X_train = (X_train.astype(np.float32) - 127.5) / 127.5
     X_train = np.expand_dims(X_train, axis=3)
 
