@@ -21,6 +21,7 @@ LOG_PATH = './log'
 
 
 def process_discriminator(generator, discriminator, images, labels, batch_size, latent_size, is_train=True):
+    # as using batchnorm, have to train discriminator as spliting fake and true
     noise = np.random.normal(
         loc=0.0, scale=1.0, size=(batch_size, latent_size))
     sampled_labels = np.random.randint(0, 10, batch_size)
@@ -29,14 +30,22 @@ def process_discriminator(generator, discriminator, images, labels, batch_size, 
     generated_images = generator.predict(
         [noise, sampled_labels], verbose=False)
 
-    X = np.concatenate((images, generated_images))
-    y = np.array([1] * batch_size + [0] * batch_size)
-    aux_y = np.concatenate((labels, sampled_labels), axis=0)
+    #X = np.concatenate((images, generated_images))
+    #y = np.array([1] * batch_size + [0] * batch_size)
+    #aux_y = np.concatenate((labels, sampled_labels), axis=0)
+    
+    # noisy labels are efficient for discriminator's training
+    y_true = np.random.uniform(0.7, 1.2, batch_size)
+    y_fake = np.random.uniform(0.0, 0.3, batch_size)
 
     if is_train:
-        loss = discriminator.train_on_batch(X, [y, aux_y])
+        loss_true = discriminator.train_on_batch(images, [y_true, labels])
+        loss_fake = discriminator.train_on_batch(generated_images, [y_fake, sampled_labels])
+        loss = loss_true + loss_fake
     else:
-        loss = discriminator.evaluate(X, [y, aux_y], verbose=False)
+        loss_true = discriminator.evaluate(images, [y_true, labels], verbose=False)
+        loss_fake = discriminator.evaluate(generated_images, [y_fake, sampled_labels])
+        loss = loss_true + loss_fake
 
     return loss
 
@@ -82,7 +91,7 @@ def main(args):
     latent_size = args.latent_size
     label_size = CLASS_NUM
 
-    lr = 0.0001
+    lr = 0.0002
     beta_1 = 0.5
 
     # build the discriminator
