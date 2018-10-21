@@ -80,7 +80,7 @@ def build_discriminator():
     discriminator_batchnorm3 = BatchNormalization(name='discriminator_batchnorm3'
                                                   )(discriminator_dense1)
     discriminator_leakyrelu3 = LeakyReLU(alpha=0.2,
-                                         name='discriminator_leakyrelu3')(discriminator_dense1)
+                                         name='discriminator_leakyrelu3')(discriminator_batchnorm3)
     discriminator_dropout3 = Dropout(0.5, name='discriminator_dropout3',
                                      )(discriminator_leakyrelu3)
     discriminator_output = Dense(1, activation='sigmoid',
