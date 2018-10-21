@@ -1,3 +1,5 @@
+<img width="300" alt="2018-10-21 22 00 17" src="https://github.com/yukia18/DeepLearning/blob/master/GAN/dcgan/log/plot_epoch_499_generated.png">
+
 ## requirements
 - python 3.6.6
 - GPU recommended
