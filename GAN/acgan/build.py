@@ -1,4 +1,4 @@
-from keras.layers import Input, Dense, Reshape, Flatten, concatenate, Dropout, BatchNormalization
+from keras.layers import Input, Dense, Reshape, Flatten, concatenate, Dropout, BatchNormalization, Activation
 from keras.layers.advanced_activations import LeakyReLU
 from keras.layers.convolutional import Conv2DTranspose, Conv2D
 from keras.models import Model
@@ -15,28 +15,34 @@ def build_generator(latent_size=100, label_size=10):
     generator_input = concatenate([generator_latent, generator_label])
 
     # reshape 2d
-    generator_dense = Dense(7 * 7 * 128, activation='relu',
-                            name='generator_dense')(generator_input)
+    generator_dense1 = Dense(1024, name='generator_dense1'
+                             )(generator_input)
+    generator_batchnorm1 = BatchNormalization(name='generator_batchnorm1'
+                                              )(generator_dense1)
+    generator_relu1 = Activation('relu', name='generator_relu1'
+                                 )(generator_batchnorm1)
+    generator_dense2 = Dense(7 * 7 * 128, name='generator_dense2'
+                             )(generator_relu1)
+    generator_batchnorm2 = BatchNormalization(name='generator_batchnorm2'
+                                              )(generator_dense2)
+    generator_relu2 = Activation('relu', name='generator_relu2'
+                                 )(generator_batchnorm2)
     generator_reshape = Reshape(target_shape=(7, 7, 128),
-                                name='generator_reshape')(generator_dense)
+                                name='generator_reshape')(generator_relu2)
 
     # deconvolution
     generator_deconv1 = Conv2DTranspose(filters=64, kernel_size=5, strides=2,
-                                        padding='same', activation='relu',
-                                        kernel_initializer='glorot_normal',
+                                        padding='same', kernel_initializer='glorot_normal',
                                         name='generator_deconv1')(generator_reshape)
-    generator_batchnorm1 = BatchNormalization(name='generator_batchnorm1',
+    generator_batchnorm3 = BatchNormalization(name='generator_batchnorm3',
                                               )(generator_deconv1)
-    generator_deconv2 = Conv2DTranspose(filters=32, kernel_size=5, strides=2,
-                                        padding='same', activation='relu',
-                                        kernel_initializer='glorot_normal',
-                                        name='generator_deconv2')(generator_batchnorm1)
-    generator_batchnorm2 = BatchNormalization(name='generator_batchnorm2',
-                                              )(generator_deconv2)
-    generator_output = Conv2DTranspose(filters=1, kernel_size=5, strides=1,
-                                       padding='same', activation='tanh',
-                                       kernel_initializer='glorot_normal',
-                                       name='generator_output')(generator_batchnorm2)
+    generator_relu3 = Activation('relu', name='generator_relu3'
+                                 )(generator_batchnorm3)
+    generator_deconv2 = Conv2DTranspose(filters=1, kernel_size=5, strides=2,
+                                        padding='same', kernel_initializer='glorot_normal',
+                                        name='generator_deconv2')(generator_relu3)
+    generator_output = Activation('tanh', name='generator_output',
+                                  )(generator_deconv2)
 
     model = Model(input=[generator_latent, generator_label],
                   output=generator_output)
@@ -47,48 +53,40 @@ def build_discriminator():
     discriminator_input = Input(shape=(28, 28, 1))
 
     # conv
-    discriminator_conv1 = Conv2D(filters=16, kernel_size=3, strides=2,
-                                 padding='valid', kernel_initializer='glorot_normal',
+    discriminator_conv1 = Conv2D(filters=64, kernel_size=5, strides=2,
+                                 padding='same', kernel_initializer='glorot_normal',
                                  name='discriminator_conv1')(discriminator_input)
+    discriminator_batchnorm1 = BatchNormalization(name='discriminator_batchnorm1'
+                                                  )(discriminator_conv1)
     discriminator_leakyrelu1 = LeakyReLU(alpha=0.2,
-                                         name='discriminator_leakyrelu1')(discriminator_conv1)
+                                         name='discriminator_leakyrelu1')(discriminator_batchnorm1)
     discriminator_dropout1 = Dropout(0.5, name='discriminator_dropout1',
                                      )(discriminator_leakyrelu1)
-    discriminator_conv2 = Conv2D(filters=32, kernel_size=3, strides=1,
-                                 padding='valid', kernel_initializer='glorot_normal',
+    discriminator_conv2 = Conv2D(filters=128, kernel_size=5, strides=2,
+                                 padding='same', kernel_initializer='glorot_normal',
                                  name='discriminator_conv2')(discriminator_dropout1)
-    discriminator_leakyrelu2 = LeakyReLU(alpha=0.2,
-                                         name='discriminator_leakyrelu2')(discriminator_conv2)
     discriminator_batchnorm2 = BatchNormalization(name='discriminator_batchnorm2',
-                                                  )(discriminator_leakyrelu2)
+                                                  )(discriminator_conv2)
+    discriminator_leakyrelu2 = LeakyReLU(alpha=0.2,
+                                         name='discriminator_leakyrelu2')(discriminator_batchnorm2)
     discriminator_dropout2 = Dropout(0.5, name='discriminator_dropout2',
-                                     )(discriminator_batchnorm2)
-    discriminator_conv3 = Conv2D(filters=64, kernel_size=3, strides=2,
-                                 padding='valid', kernel_initializer='glorot_normal',
-                                 name='discriminator_conv3')(discriminator_dropout2)
-    discriminator_leakyrelu3 = LeakyReLU(alpha=0.2,
-                                         name='discriminator_leakyrelu3')(discriminator_conv3)
-    discriminator_batchnorm3 = BatchNormalization(name='discriminator_batchnorm3',
-                                                  )(discriminator_leakyrelu3)
-    discriminator_dropout3 = Dropout(0.5, name='discriminator_dropout3',
-                                     )(discriminator_batchnorm3)
-    #discriminator_conv4 = Conv2D(filters=128, kernel_size=3, strides=1,
-    #                             padding='valid', kernel_initializer='glorot_normal',
-    #                             name='discriminator_conv4')(discriminator_dropout3)
-    #discriminator_leakyrelu4 = LeakyReLU(alpha=0.2,
-    #                                     name='discriminator_leakyrelu4')(discriminator_conv4)
-    #discriminator_batchnorm4 = BatchNormalization(name='discriminator_batchnorm4',
-    #                                              )(discriminator_leakyrelu4)
-    #discriminator_dropout4 = Dropout(0.5, name='discriminator_dropout4',
-    #                                 )(discriminator_batchnorm4)
+                                     )(discriminator_leakyrelu2)
 
     # linear
     discriminator_flatten = Flatten(name='discriminator_flatten'
-                                    )(discriminator_dropout3)
+                                    )(discriminator_dropout2)
+    discriminator_dense1 = Dense(256, name='discriminator_dense1'
+                                 )(discriminator_flatten)
+    discriminator_batchnorm3 = BatchNormalization(name='discriminator_batchnorm3'
+                                                  )(discriminator_dense1)
+    discriminator_leakyrelu3 = LeakyReLU(alpha=0.2,
+                                         name='discriminator_leakyrelu3')(discriminator_dense1)
+    discriminator_dropout3 = Dropout(0.5, name='discriminator_dropout3',
+                                     )(discriminator_leakyrelu3)
     discriminator_output = Dense(1, activation='sigmoid',
-                                 name='discriminator_output')(discriminator_flatten)
+                                 name='discriminator_output')(discriminator_dropout3)
     auxiliary_output = Dense(10, activation='softmax',
-                             name='auxiliary_output')(discriminator_flatten)
+                             name='auxiliary_output')(discriminator_dropout3)
 
     model = Model(input=discriminator_input,
                   output=[discriminator_output, auxiliary_output])
