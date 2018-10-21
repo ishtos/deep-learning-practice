@@ -27,7 +27,7 @@ def build_generator(latent_size=100):
     generator_batchnorm1 = BatchNormalization(name='generator_batchnorm1',
                                               )(generator_deconv1)
     generator_relu2 = Activation('relu', name='generator_relu2'
-                                 )(generator_batchnorm2)
+                                 )(generator_batchnorm1)
     generator_deconv2 = Conv2DTranspose(filters=1, kernel_size=5, strides=2,
                                         padding='same', kernel_initializer='glorot_normal',
                                         name='generator_deconv2')(generator_relu2)
