@@ -12,7 +12,7 @@ from PIL import Image
 
 np.random.seed(2018)
 parser = argparse.ArgumentParser()
-parser.add_argument('--epochs', type=int, default=50)
+parser.add_argument('--epochs', type=int, default=500)
 parser.add_argument('--batch_size', type=int, default=100)
 parser.add_argument('--latent_size', type=int, default=100)
 # index 0: mnist
