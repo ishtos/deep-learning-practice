@@ -15,32 +15,24 @@ def build_generator(latent_size=100, label_size=10):
     generator_input = concatenate([generator_latent, generator_label])
 
     # reshape 2d
-    generator_dense1 = Dense(1024, name='generator_dense1'
+    generator_dense1 = Dense(7 * 7 * 128, name='generator_dense1'
                              )(generator_input)
-    generator_batchnorm1 = BatchNormalization(name='generator_batchnorm1'
-                                              )(generator_dense1)
     generator_relu1 = Activation('relu', name='generator_relu1'
-                                 )(generator_batchnorm1)
-    generator_dense2 = Dense(7 * 7 * 128, name='generator_dense2'
-                             )(generator_relu1)
-    generator_batchnorm2 = BatchNormalization(name='generator_batchnorm2'
-                                              )(generator_dense2)
-    generator_relu2 = Activation('relu', name='generator_relu2'
-                                 )(generator_batchnorm2)
+                                 )(generator_dense1)
     generator_reshape = Reshape(target_shape=(7, 7, 128),
-                                name='generator_reshape')(generator_relu2)
+                                name='generator_reshape')(generator_relu1)
 
     # deconvolution
     generator_deconv1 = Conv2DTranspose(filters=64, kernel_size=5, strides=2,
                                         padding='same', kernel_initializer='glorot_normal',
                                         name='generator_deconv1')(generator_reshape)
-    generator_batchnorm3 = BatchNormalization(name='generator_batchnorm3',
+    generator_batchnorm1 = BatchNormalization(name='generator_batchnorm1',
                                               )(generator_deconv1)
-    generator_relu3 = Activation('relu', name='generator_relu3'
-                                 )(generator_batchnorm3)
+    generator_relu2 = Activation('relu', name='generator_relu2'
+                                 )(generator_batchnorm1)
     generator_deconv2 = Conv2DTranspose(filters=1, kernel_size=5, strides=2,
                                         padding='same', kernel_initializer='glorot_normal',
-                                        name='generator_deconv2')(generator_relu3)
+                                        name='generator_deconv2')(generator_relu2)
     generator_output = Activation('tanh', name='generator_output',
                                   )(generator_deconv2)
 
@@ -75,18 +67,10 @@ def build_discriminator():
     # linear
     discriminator_flatten = Flatten(name='discriminator_flatten'
                                     )(discriminator_dropout2)
-    discriminator_dense1 = Dense(256, name='discriminator_dense1'
-                                 )(discriminator_flatten)
-    discriminator_batchnorm3 = BatchNormalization(name='discriminator_batchnorm3'
-                                                  )(discriminator_dense1)
-    discriminator_leakyrelu3 = LeakyReLU(alpha=0.2,
-                                         name='discriminator_leakyrelu3')(discriminator_batchnorm3)
-    discriminator_dropout3 = Dropout(0.5, name='discriminator_dropout3',
-                                     )(discriminator_leakyrelu3)
     discriminator_output = Dense(1, activation='sigmoid',
-                                 name='discriminator_output')(discriminator_dropout3)
+                                 name='discriminator_output')(discriminator_flatten)
     auxiliary_output = Dense(10, activation='softmax',
-                             name='auxiliary_output')(discriminator_dropout3)
+                             name='auxiliary_output')(discriminator_flatten)
 
     model = Model(input=discriminator_input,
                   output=[discriminator_output, auxiliary_output])

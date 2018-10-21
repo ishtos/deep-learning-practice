@@ -15,6 +15,9 @@ parser = argparse.ArgumentParser()
 parser.add_argument('--epochs', type=int, default=50)
 parser.add_argument('--batch_size', type=int, default=100)
 parser.add_argument('--latent_size', type=int, default=100)
+# index 0: mnist
+# index 1: fashion_mnist
+parser.add_argument('--mnist', type=int, default=0)
 args = parser.parse_args()
 CLASS_NUM = 10
 LOG_PATH = './log'
@@ -22,7 +25,7 @@ LOG_PATH = './log'
 
 def process_discriminator(generator, discriminator, images, labels, batch_size, latent_size, is_train=True):
     # as using batchnorm, have to train discriminator as spliting fake and true
-    #noise = np.random.normal(
+    # noise = np.random.normal(
     #    loc=0.0, scale=1.0, size=(batch_size, latent_size))
     noise = np.random.uniform(-1, 1, size=(batch_size, latent_size))
     sampled_labels = np.random.randint(0, 10, batch_size)
@@ -34,25 +37,30 @@ def process_discriminator(generator, discriminator, images, labels, batch_size, 
     #X = np.concatenate((images, generated_images))
     #y = np.array([1] * batch_size + [0] * batch_size)
     #aux_y = np.concatenate((labels, sampled_labels), axis=0)
-    
+
     # noisy labels are efficient for discriminator's training
-    y_true = np.random.uniform(0.7, 1.2, batch_size)
-    y_fake = np.random.uniform(0.0, 0.3, batch_size)
+    y_true = np.ones(batch_size)
+    y_fake = np.zeros(batch_size)
+    #y_true = np.random.uniform(0.7, 1.2, batch_size)
+    #y_fake = np.random.uniform(0.0, 0.3, batch_size)
 
     if is_train:
         loss_true = discriminator.train_on_batch(images, [y_true, labels])
-        loss_fake = discriminator.train_on_batch(generated_images, [y_fake, sampled_labels])
+        loss_fake = discriminator.train_on_batch(
+            generated_images, [y_fake, sampled_labels])
         loss = loss_true + loss_fake
     else:
-        loss_true = discriminator.evaluate(images, [y_true, labels], verbose=False)
-        loss_fake = discriminator.evaluate(generated_images, [y_fake, sampled_labels])
+        loss_true = discriminator.evaluate(
+            images, [y_true, labels], verbose=False)
+        loss_fake = discriminator.evaluate(
+            generated_images, [y_fake, sampled_labels], verbose=False)
         loss = loss_true + loss_fake
 
     return loss
 
 
 def process_generator(gan, batch_size, latent_size, is_train=True):
-    #noise = np.random.normal(
+    # noise = np.random.normal(
     #    loc=0.0, scale=1.0, size=(2 * batch_size, latent_size))
     noise = np.random.uniform(-1, 1, size=(2 * batch_size, latent_size))
     sampled_labels = np.random.randint(0, 10, 2 * batch_size)
@@ -70,7 +78,7 @@ def process_generator(gan, batch_size, latent_size, is_train=True):
 
 
 def generate_100images(generator, latent_size):
-    #noise = np.random.normal(
+    # noise = np.random.normal(
     #    loc=0.0, scale=1.0, size=(100, latent_size))
     noise = np.random.uniform(-1, 1, size=(100, latent_size))
     sampled_labels = np.array([[i] * 10 for i in range(10)]).flatten()
@@ -93,6 +101,7 @@ def main(args):
     batch_size = args.batch_size
     latent_size = args.latent_size
     label_size = CLASS_NUM
+    mnist = args.mnist
 
     lr = 0.0002
     beta_1 = 0.5
@@ -120,8 +129,11 @@ def main(args):
     )
     gan.summary()
 
-    # fashion_mnist, shape (..., 28, 28, 1) with range [-1, 1]
-    (X_train, y_train), (X_test, y_test) = load_mnist()
+    # shape (..., 28, 28, 1) with range [-1, 1]
+    if mnist == 0:
+        (X_train, y_train), (X_test, y_test) = load_mnist(is_fashion=False)
+    elif mnist == 1:
+        (X_train, y_train), (X_test, y_test) = load_mnist(is_fashion=True)
     num_train, num_test = X_train.shape[0], X_test.shape[0]
 
     train_history = defaultdict(list)
