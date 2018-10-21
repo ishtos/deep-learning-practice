@@ -1,4 +1,4 @@
-<img width="300" src="">
+<img width="300" src="https://github.com/yukia18/DeepLearning/blob/master/GAN/acgan/log/plot_epoch_399_generated.png">
 
 ## requirements
 - python 3.6.6
