@@ -22,8 +22,9 @@ LOG_PATH = './log'
 
 def process_discriminator(generator, discriminator, images, labels, batch_size, latent_size, is_train=True):
     # as using batchnorm, have to train discriminator as spliting fake and true
-    noise = np.random.normal(
-        loc=0.0, scale=1.0, size=(batch_size, latent_size))
+    #noise = np.random.normal(
+    #    loc=0.0, scale=1.0, size=(batch_size, latent_size))
+    noise = np.random.uniform(-1, 1, size=(batch_size, latent_size))
     sampled_labels = np.random.randint(0, 10, batch_size)
     sampled_labels = to_categorical(sampled_labels, num_classes=CLASS_NUM)
 
@@ -51,8 +52,9 @@ def process_discriminator(generator, discriminator, images, labels, batch_size, 
 
 
 def process_generator(gan, batch_size, latent_size, is_train=True):
-    noise = np.random.normal(
-        loc=0.0, scale=1.0, size=(2 * batch_size, latent_size))
+    #noise = np.random.normal(
+    #    loc=0.0, scale=1.0, size=(2 * batch_size, latent_size))
+    noise = np.random.uniform(-1, 1, size=(2 * batch_size, latent_size))
     sampled_labels = np.random.randint(0, 10, 2 * batch_size)
     sampled_labels = to_categorical(sampled_labels, num_classes=CLASS_NUM)
 
@@ -68,8 +70,9 @@ def process_generator(gan, batch_size, latent_size, is_train=True):
 
 
 def generate_100images(generator, latent_size):
-    noise = np.random.normal(
-        loc=0.0, scale=1.0, size=(100, latent_size))
+    #noise = np.random.normal(
+    #    loc=0.0, scale=1.0, size=(100, latent_size))
+    noise = np.random.uniform(-1, 1, size=(100, latent_size))
     sampled_labels = np.array([[i] * 10 for i in range(10)]).flatten()
     sampled_labels = to_categorical(sampled_labels, num_classes=CLASS_NUM)
 
