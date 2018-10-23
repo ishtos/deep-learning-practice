@@ -21,22 +21,13 @@ def build_generator():
     x = layers.Dense(128 * 14 * 14)(generator_input)
     x = layers.LeakyReLU()(x)
     x = layers.Reshape((14, 14, 128))(x)
-
-    x = layers.Conv2D(256, 5, padding='same')(x)
+    x = layers.Conv2DTranspose(64, 4, strides=2, padding='same')(x)
     x = layers.LeakyReLU()(x)
-
-    x = layers.Conv2DTranspose(256, 4, strides=2, padding='same')(x)
+    x = layers.Conv2D(64, 5, padding='same')(x)
     x = layers.LeakyReLU()(x)
-
-    x = layers.Conv2D(256, 5, padding='same')(x)
-    x = layers.LeakyReLU()(x)
-    x = layers.Conv2D(256, 5, padding='same')(x)
-    x = layers.LeakyReLU()(x)
-
-    x = layers.Conv2D(channels, 7, activation='tanh', padding='same')(x)
+    x = layers.Conv2D(channels, 5, activation='tanh', padding='same')(x)
 
     generator = keras.models.Model(generator_input, x)
-    # generator.summary()
 
     return generator
 
@@ -50,16 +41,12 @@ def build_discriminator():
     x = layers.LeakyReLU()(x)
     x = layers.Conv2D(128, 4, strides=2)(x)
     x = layers.LeakyReLU()(x)
-    x = layers.Conv2D(128, 4, strides=2)(x)
-    x = layers.LeakyReLU()(x)
     x = layers.Flatten()(x)
 
     x = layers.Dropout(0.4)(x)
-
     x = layers.Dense(1, activation='sigmoid')(x)
 
     discriminator = keras.models.Model(discriminator_input, x)
-    # discriminator.summary() 
 
     discriminator_optimizer = keras.optimizers.RMSprop(
         lr=0.0008, clipvalue=1.0, decay=1e-8)
@@ -69,10 +56,8 @@ def build_discriminator():
     return discriminator
 
 
-def build_gan():
-    generator = build_generator()
-    discriminator = build_discriminator()
-
+def build_gan(generator, discriminator):
+  
     discriminator.trainable = False
 
     gan_input = keras.Input(shape=(latent_dim, ))
@@ -99,7 +84,7 @@ def main(args):
 
     generator = build_generator()
     discriminator = build_discriminator()
-    gan = build_gan()
+    gan = build_gan(generator, discriminator)
 
     start = 0
     for step in tqdm(range(iterations)):
@@ -128,7 +113,7 @@ def main(args):
         if start > len(x_train) - batch_size:
             start = 0
         
-        if step % 100 == 0:
+        if step % 1000 == 0:
             gan.save_weights('gan.h5')
 
             print('discriminator loss at step %s: %s' % (step, d_loss))
@@ -144,7 +129,7 @@ def main(args):
 def parse_arguments(argv):
     parser = argparse.ArgumentParser()
 
-    parser.add_argument('--iterations', type=int, default=1000)
+    parser.add_argument('--iterations', type=int, default=10000)
     parser.add_argument('--batch_size', type=int, default=20)
     parser.add_argument('--save_dir', type=str, default='./logs')
 
