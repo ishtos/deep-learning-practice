@@ -122,7 +122,7 @@ def main(args):
     x_test = (x_test.astype(np.float32) - 127.5) / 127.5
     x_test = np.expand_dims(x_test, axis=1)
 
-    nb_train, nb_test = x_train.shape[0], x_test.shape[0]
+    _, nb_test = x_train.shape[0], x_test.shape[0]
 
     train_history = defaultdict(list)
     test_history = defaultdict(list)
