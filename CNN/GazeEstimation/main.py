@@ -173,7 +173,6 @@ def test(epoch, model, criterion, test_loader, config, writer):
 
 def main(args):
     model = GazeNet()
-    args = parse_args()
     logger.info(json.dumps(vars(args), indent=2))
 
     # TensorBoard SummaryWriter
