@@ -14,12 +14,12 @@ class GazeNet(nn.Module):
         self.Conv1 = nn.Conv2d(in_channels=256, out_channels=256, kernel_size=1, stride=1, padding=0)
         self.Conv2 = nn.Conv2d(in_channels=256, out_channels=256, kernel_size=1, stride=1, padding=0)
         self.Conv3 = nn.Conv2d(in_channels=256, out_channels=1, kernel_size=1, stride=1, padding=0)
-        self.layer4 = nn.Sequential(
+        self.layer1 = nn.Sequential(
             nn.Linear(256*13*13, 4096),
             nn.ReLU(),
             nn.Dropout(0.5)
         )
-        self.layer5 = nn.Sequential(
+        self.layer2 = nn.Sequential(
             nn.Linear(4096, 4096),
             nn.ReLU(),
             nn.Dropout(0.5)
@@ -39,7 +39,7 @@ class GazeNet(nn.Module):
         nn.init.constant_(self.Conv2.bias, val=0.1)
         nn.init.constant_(self.Conv3.bias, val=1)
 
-    def forward(self, x):
+    def forward(self, x, z):
         x = self.alexnet(x)
 
         y = F.relu(self.Conv1(x))
@@ -48,8 +48,8 @@ class GazeNet(nn.Module):
 
         x = F.dropout(F.relu(F.mul(x, y)), 0.5)
         x = x.view(x.size(0), -1)
-        x = self.layer4(x)
-        x = self.layer5(x)
+        x = self.layer1(x)
+        x = self.layer2(x)
         x = self.fc(x)
 
         return x

@@ -73,7 +73,7 @@ def train(epoch, model, optimizer, criterion, train_loader, config, writer):
     loss_meter = AverageMeter()
     angle_error_meter = AverageMeter()
     start = time.time()
-    for step, (images, poses, gazes) in enumerate(train_loader):
+    for step, (images, gazes) in enumerate(train_loader):
         global_step += 1
 
         # if config['tensorboard_images'] and step == 0:
@@ -82,12 +82,11 @@ def train(epoch, model, optimizer, criterion, train_loader, config, writer):
         #     writer.add_image('Train/Image', image, epoch)
 
         images = images.cuda()
-        poses = poses.cuda()
         gazes = gazes.cuda()
 
         optimizer.zero_grad()
 
-        outputs = model(images, poses)
+        outputs = model(images)
         loss = criterion(outputs, gazes)
         loss.backward()
 
@@ -132,18 +131,17 @@ def test(epoch, model, criterion, test_loader, config, writer):
     loss_meter = AverageMeter()
     angle_error_meter = AverageMeter()
     start = time.time()
-    for step, (images, poses, gazes) in enumerate(test_loader):
+    for step, (images, gazes) in enumerate(test_loader):
         # if config['tensorboard_images'] and epoch == 0 and step == 0:
         #     image = torchvision.utils.make_grid(
         #         images, normalize=True, scale_each=True)
         #     writer.add_image('Test/Image', image, epoch)
 
         images = images.cuda()
-        poses = poses.cuda()
         gazes = gazes.cuda()
 
         with torch.no_grad():
-            outputs = model(images, poses)
+            outputs = model(images)
         loss = criterion(outputs, gazes)
 
         angle_error = compute_angle_error(outputs, gazes).mean()
@@ -176,7 +174,8 @@ def main(args):
     logger.info(json.dumps(vars(args), indent=2))
 
     # TensorBoard SummaryWriter
-    writer = SummaryWriter() if args.tensorboard else None
+    # writer = SummaryWriter() if args.tensorboard else None
+    writer = None
 
     # set random seed
     seed = args.seed
@@ -211,7 +210,7 @@ def main(args):
         weight_decay=args.weight_decay,
         nesterov=args.nesterov)
     scheduler = torch.optim.lr_scheduler.MultiStepLR(
-        optimizer, milestones=args.milestones, gamma=args.lr_decay)
+        optimizer, milestones=[20, 30], gamma=args.lr_decay)
 
     # config = {
     #     'tensorboard': args.tensorboard,
@@ -247,15 +246,15 @@ def main(args):
 
 def parse_arguments(argv):
     parser = argparse.ArgumentParser()
-    parser.add_argument('--dataset', type=str, required=True)
-    parser.add_argument('--test_id', type=int, required=True)
-    parser.add_argument('--outdir', type=str, required=True)
-    parser.add_argument('--seed', type=int, default=17)
-    parser.add_argument('--num_workers', type=int, default=7)
+    parser.add_argument('--dataset', type=str, default='MPIIFaceGaze_normalized')
+    parser.add_argument('--test_id', type=int, default=0)
+    parser.add_argument('--outdir', type=str, default='result')
+    parser.add_argument('--seed', type=int, default=6)
+    parser.add_argument('--num_workers', type=int, default=8)
 
     # optimizer
     parser.add_argument('--epochs', type=int, default=40)
-    parser.add_argument('--batch_size', type=int, default=64)
+    parser.add_argument('--batch_size', type=int, default=1)
     parser.add_argument('--base_lr', type=float, default=0.01)
     parser.add_argument('--weight_decay', type=float, default=1e-4)
     parser.add_argument('--momentum', type=float, default=0.9)
