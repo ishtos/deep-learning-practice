@@ -103,28 +103,52 @@ def main(args):
     if not os.path.isdir('logs'):
         os.mkdir('logs')
 
-    best_acc = 0
-    loss_list = []
-    val_loss_list = []
-    val_acc_list = []
-    for epoch in range(args.n_epochs):
-        loss = train(model, criterion, optimizer, train_loader, use_gpu)
-        val_loss, val_acc = valid(model, criterion, valid_loader, use_gpu)
+    if args.mode == 'train':
+        best_acc = 0
+        loss_list = []
+        val_loss_list = []
+        val_acc_list = []
+        for epoch in range(args.n_epochs):
+            loss = train(model, criterion, optimizer, train_loader, use_gpu)
+            val_loss, val_acc = valid(model, criterion, valid_loader, use_gpu)
 
-        print('epoch %d, loss: %.4f val_loss: %.4f val_acc: %.4f' %
-            (epoch, loss, val_loss, val_acc))
+            print('epoch %d, loss: %.4f val_loss: %.4f val_acc: %.4f' %
+                (epoch, loss, val_loss, val_acc))
 
-        if val_acc > best_acc:
-            print('val_acc improved from %.5f to %.5f!' % (best_acc, val_acc))
-            best_acc = val_acc
-            model_file = 'epoch%03d-%.3f-%.3f.pth' % (epoch, val_loss, val_acc)
-            torch.save(model.state_dict(), os.path.join(log_dir, model_file))
+            if val_acc > best_acc:
+                print('val_acc improved from %.5f to %.5f!' % (best_acc, val_acc))
+                best_acc = val_acc
+                model_file = 'epoch%03d-%.3f-%.3f.pth' % (epoch, val_loss, val_acc)
+                torch.save(model.state_dict(), os.path.join(log_dir, model_file))
 
-        loss_list.append(loss)
-        val_loss_list.append(val_loss)
-        val_acc_list.append(val_acc)
+            loss_list.append(loss)
+            val_loss_list.append(val_loss)
+            val_acc_list.append(val_acc)
     
-    if 
+    if args.mode == 'test':
+        weight_file = args.path_weight_file
+
+        model = AutoEncoder()
+        model.load_state_dict(
+            torch.load(
+                weight_file,
+                map_location=lambda storage,
+                loc: storage))
+
+        test_loader = torch.utils.data.DataLoader(test_dataset,
+                                          batch_size=128,
+                                          shuffle=False)
+
+        images, _ = iter(test_loader).next()
+        images = Variable(images, volatile=True)
+        print(images.size())
+
+        imshow(torchvision.utils.make_grid(images.data[:25], nrow=5))
+
+        outputs = model(images)
+        
+        imshow(torchvision.utils.make_grid(outputs.data[:25], nrow=5))
+
 
 
 def train(model, criterion, optimizer, train_loader, use_gpu):
@@ -183,6 +207,7 @@ def parse_arguments(argv)
     parser.add_argument('--mode', choices=['train', 'test'], default='train')
     parser.add_argument('--n_epochs', type=int, help='Number of epochs', default=500)
     parser.add_argument('--batch_size', type=int, help='Number of batch size', default=8)
+    parser.add_argument('--path_weight_file', type=str, help='path to weight file')
 
     return parser.parse_args(argv)
 
