@@ -11,3 +11,10 @@ __pycache__
 # logs
 pytorch/logs
 tensorflow/logs
+
+# png
+pytorch/train.png
+pytorch/valid.png
+
+# .DS_Store
+.DS_Store
