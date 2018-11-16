@@ -1,0 +1,13 @@
+# dataset
+pytorch/dataset
+tensorflow/dataset
+
+# .vscode
+.vscode
+
+# __pycache__
+__pycache__
+
+# logs
+pytorch/logs
+tensorflow/logs
