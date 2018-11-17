@@ -32,14 +32,14 @@ def main(args):
     test_dir = os.path.join(data_dir, 'test')
 
     train_preprocess = transforms.Compose([
-        transforms.Resize((224, 224)),
+        transforms.Resize((128, 128)),
         transforms.ToTensor(),
         transforms.Normalize(
             mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
     ])
 
     test_preprocess = transforms.Compose([
-        transforms.Resize((224, 224)),
+        transforms.Resize((128, 128)),
         transforms.ToTensor(),
         transforms.Normalize(
             mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
@@ -66,12 +66,12 @@ def main(args):
 
     train_loader = torch.utils.data.DataLoader(
         train_dataset,
-        batch_size=128,
+        batch_size=args.batch_size,
         sampler=train_sampler
     )
     valid_loader = torch.utils.data.DataLoader(
         train_dataset,
-        batch_size=128,
+        batch_size=args.batch_size,
         sampler=validation_sampler
     )
 
@@ -104,26 +104,24 @@ def main(args):
         os.mkdir('logs')
 
     if args.mode == 'train':
-        best_acc = 0
+        best_val = 5
         loss_list = []
         val_loss_list = []
-        val_acc_list = []
         for epoch in range(args.n_epochs):
             loss = train(model, criterion, optimizer, train_loader, use_gpu)
-            val_loss, val_acc = valid(model, criterion, valid_loader, use_gpu)
+            val_loss = valid(model, criterion, valid_loader, use_gpu)
 
-            print('epoch %d, loss: %.4f val_loss: %.4f val_acc: %.4f' %
-                (epoch, loss, val_loss, val_acc))
+            print('epoch %d, loss: %.4f val_loss: %.4f' %
+                (epoch, loss, val_loss))
 
-            if val_acc > best_acc:
-                print('val_acc improved from %.5f to %.5f!' % (best_acc, val_acc))
-                best_acc = val_acc
-                model_file = 'epoch%03d-%.3f-%.3f.pth' % (epoch, val_loss, val_acc)
+            if val_loss < best_val:
+                print('val_loss improved from %.5f to %.5f!' % (best_val, val_loss))
+                best_val = val_loss
+                model_file = 'epoch%03d-%.3f.pth' % (epoch, val_loss)
                 torch.save(model.state_dict(), os.path.join(log_dir, model_file))
 
             loss_list.append(loss)
             val_loss_list.append(val_loss)
-            val_acc_list.append(val_acc)
     
     if args.mode == 'test':
         weight_file = args.path_weight_file
@@ -136,7 +134,7 @@ def main(args):
                 loc: storage))
 
         test_loader = torch.utils.data.DataLoader(test_dataset,
-                                          batch_size=128,
+                                          batch_size=args.batch_size,
                                           shuffle=False)
 
         images, _ = iter(test_loader).next()
@@ -190,18 +188,12 @@ def valid(model, criterion, valid_loader, use_gpu):
         loss = criterion(outputs, images)
         running_loss += loss.data
 
-        _, predicted = torch.max(outputs.data, 1)
-        correct += (predicted == labels.data).sum()
-        total += labels.size(0)
-
     val_loss = running_loss / len(valid_loader)
-    val_acc = correct / total
 
-    return val_loss, val_acc
+    return val_loss
 
 
-def parse_arguments(argv)
-    def parse_arguments(argv):
+def parse_arguments(argv):
     parser = argparse.ArgumentParser()
 
     parser.add_argument('--mode', choices=['train', 'test'], default='train')
@@ -212,4 +204,4 @@ def parse_arguments(argv)
     return parser.parse_args(argv)
 
 if __name__ == '__main__':
-    main(parser_arguments(sys.argv[1:]))
+    main(parse_arguments(sys.argv[1:]))
