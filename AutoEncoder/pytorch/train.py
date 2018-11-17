@@ -1,9 +1,7 @@
 import os
 import sys
-import cv2
 import argparse
 import numpy as np
-import matplotlib.pyplot as plt
 
 import torch
 import torch.nn as nn
@@ -12,18 +10,8 @@ import torchvision
 from torchvision import datasets, transforms
 from torch.utils.data.sampler import SubsetRandomSampler
 
-from utils import dataloader
+from utils import dataloader, imshow
 from autoencoder import Encoder, Decoder, AutoEncoder
-
-
-def imshow(images, file_name='train'):
-    images = images.numpy().transpose((1, 2, 0))
-    mean = np.array([0.485, 0.456, 0.406])
-    std = np.array([0.229, 0.224, 0.225])
-    images = std * images + mean
-    images = np.clip(images, 0, 1)
-    plt.imshow(images)
-    plt.savefig('{}.png'.format(file_name))
 
 
 def main(args):
@@ -51,6 +39,7 @@ def main(args):
         batch_size=args.batch_size, 
         sampler=validation_sampler)
 
+    ## debug
     if args.debug:
         images, _ = next(iter(train_loader))
         grid = torchvision.utils.make_grid(images[:25], nrow=5)
@@ -60,20 +49,24 @@ def main(args):
         grid = torchvision.utils.make_grid(images[:25], nrow=5)
         imshow(grid, 'valid')
 
+    ## define model
     model = AutoEncoder()
     use_gpu = torch.cuda.is_available()
     if use_gpu:
         print('cuda is available!')
         model.cuda()
-
+    
+    ## loss and optimizer
     criterion = nn.MSELoss()
     optimizer = torch.optim.SGD(
         model.parameters(), lr=0.001, momentum=0.9, weight_decay=1e-5)
 
+    ## log 
     log_dir = 'logs'
     if not os.path.isdir('logs'):
         os.mkdir('logs')
 
+    ## train and valid
     best_val = 5
     loss_list = []
     val_loss_list = []
@@ -86,9 +79,8 @@ def main(args):
         if val_loss < best_val:
             print('val_loss improved from {:.5f} to {:.5f}!'.format(best_val, val_loss))
             best_val = val_loss
-            model_file = 'epoch%03d-%.3f.pth' % (epoch, val_loss)
-            torch.save(model.state_dict(), os.path.join(
-                log_dir, model_file))
+            model_file = 'epoch{:03d}-{:.3f}.pth'.format(epoch, val_loss)
+            torch.save(model.state_dict(), os.path.join(log_dir, model_file))
 
         loss_list.append(loss)
         val_loss_list.append(val_loss)

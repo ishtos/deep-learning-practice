@@ -1,9 +1,7 @@
 import os
 import sys
-import cv2
 import argparse
 import numpy as np
-import matplotlib.pyplot as plt
 
 import torch
 import torch.nn as nn
@@ -12,18 +10,8 @@ import torchvision
 from torchvision import datasets, transforms
 from torch.utils.data.sampler import SubsetRandomSampler
 
-from utils import dataloader
+from utils import dataloader, imshow
 from autoencoder import Encoder, Decoder, AutoEncoder
-
-
-def imshow(images, file_name='train'):
-    images = images.numpy().transpose((1, 2, 0))
-    mean = np.array([0.485, 0.456, 0.406])
-    std = np.array([0.229, 0.224, 0.225])
-    images = std * images + mean
-    images = np.clip(images, 0, 1)
-    plt.imshow(images)
-    plt.savefig('{}.png'.format(file_name))
 
 
 def main(args):
