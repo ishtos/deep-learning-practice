@@ -12,6 +12,7 @@ import torchvision
 from torchvision import datasets, transforms
 from torch.utils.data.sampler import SubsetRandomSampler
 
+from utils import dataloader
 from autoencoder import Encoder, Decoder, AutoEncoder
 
 
@@ -26,31 +27,11 @@ def imshow(images, file_name='train'):
 
 
 def main(args):
-    current_dir = os.getcwd()
-    data_dir = os.path.join(current_dir, 'dataset', 'dogs_cats')
-    trian_dir = os.path.join(data_dir, 'train')
-    test_dir = os.path.join(data_dir, 'test')
+    ## load datasets
+    train_dataset = dataloader('dogs_cats', 'train')
+    test_dataset = dataloader('dogs_cats', 'test')
 
-    train_preprocess = transforms.Compose([
-        transforms.Resize((128, 128)),
-        transforms.ToTensor(),
-        transforms.Normalize(
-            mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
-    ])
-
-    test_preprocess = transforms.Compose([
-        transforms.Resize((128, 128)),
-        transforms.ToTensor(),
-        transforms.Normalize(
-            mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
-    ])
-
-    train_dataset = datasets.ImageFolder(trian_dir, train_preprocess)
-    test_dataset = datasets.ImageFolder(test_dir, test_preprocess)
-
-    print(train_dataset.classes)
-    print(test_dataset.classes)
-
+    ## split train and validation
     num_train = len(train_dataset)
     indices = list(range(num_train))
     split = 5000
@@ -58,12 +39,10 @@ def main(args):
     validation_idx = np.random.choice(indices, size=split, replace=False)
     train_idx = list(set(indices) - set(validation_idx))
 
-    print(len(train_idx))
-    print(len(validation_idx))
-
     train_sampler = SubsetRandomSampler(train_idx)
     validation_sampler = SubsetRandomSampler(validation_idx)
 
+    ## train and validation loader
     train_loader = torch.utils.data.DataLoader(
         train_dataset,
         batch_size=args.batch_size,
@@ -75,18 +54,16 @@ def main(args):
         sampler=validation_sampler
     )
 
-    images, classes = next(iter(train_loader))
-    print(images.size(), classes.size())
-    grid = torchvision.utils.make_grid(images[:25], nrow=5)
-    imshow(grid, 'train')
+    if args.debug:
+        images, _ = next(iter(train_loader))
+        grid = torchvision.utils.make_grid(images[:25], nrow=5)
+        imshow(grid, 'train')
 
-    images, classes = next(iter(valid_loader))
-    print(images.size(), classes.size())
-    grid = torchvision.utils.make_grid(images[:25], nrow=5)
-    imshow(grid, 'valid')
+        images, _ = next(iter(valid_loader))
+        grid = torchvision.utils.make_grid(images[:25], nrow=5)
+        imshow(grid, 'valid')
 
     model = AutoEncoder()
-
     use_gpu = torch.cuda.is_available()
     if use_gpu:
         print('cuda is available!')
@@ -99,7 +76,7 @@ def main(args):
         momentum=0.9,
         weight_decay=1e-5)
 
-    log_dir = './logs'
+    log_dir = 'logs'
     if not os.path.isdir('logs'):
         os.mkdir('logs')
 
@@ -196,10 +173,11 @@ def valid(model, criterion, valid_loader, use_gpu):
 def parse_arguments(argv):
     parser = argparse.ArgumentParser()
 
-    parser.add_argument('--mode', choices=['train', 'test'], default='train')
+    parser.add_argument('--mode', choices=['train', 'test'], help='Mode: train or test', default='train')
     parser.add_argument('--n_epochs', type=int, help='Number of epochs', default=500)
     parser.add_argument('--batch_size', type=int, help='Number of batch size', default=8)
-    parser.add_argument('--path_weight_file', type=str, help='path to weight file')
+    parser.add_argument('--path_weight_file', type=str, help='Path to weight file')
+    parser.add_argument('--debug', type=bool, help='Debug')
 
     return parser.parse_args(argv)
 
