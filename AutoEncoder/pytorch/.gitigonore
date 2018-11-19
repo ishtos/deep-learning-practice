@@ -1,0 +1,16 @@
+# dataset
+dataset/
+
+# __pycache__
+__pycache__/
+
+# logs
+logs/
+
+# png
+train.png
+valid.png
+
+# .DS_Store
+.DS_Store
+

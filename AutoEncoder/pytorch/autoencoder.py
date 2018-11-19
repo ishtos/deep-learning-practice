@@ -27,6 +27,7 @@ class Encoder(nn.Module):
 
 
 class Interpolate(nn.Module):
+    
     def __init__(self, size, mode):
         super(Interpolate, self).__init__()
         self.interpolate = nn.functional.interpolate
@@ -47,24 +48,19 @@ class Decoder(nn.Module):
             mode='bilinear'
         )
         self.layer1 = nn.Sequential(
-            self.upsample(size=(8, 8)),
-            nn.ConvTranspose2d(in_channels=512, out_channels=256, kernel_size=1, stride=1, padding=0),
+            nn.ConvTranspose2d(in_channels=512, out_channels=256, kernel_size=2, stride=2, padding=0),
         )
         self.layer2 = nn.Sequential(
-            self.upsample(size=(16, 16)),
-            nn.ConvTranspose2d(in_channels=256, out_channels=128, kernel_size=1, stride=1, padding=0),
+            nn.ConvTranspose2d(in_channels=256, out_channels=128, kernel_size=2, stride=2, padding=0),
         )
         self.layer3 = nn.Sequential(
-            self.upsample(size=(32, 32)),
-            nn.ConvTranspose2d(in_channels=128, out_channels=64, kernel_size=1, stride=1, padding=0),
+            nn.ConvTranspose2d(in_channels=128, out_channels=64, kernel_size=2, stride=2, padding=0),
         )
         self.layer4 = nn.Sequential(
-            self.upsample(size=(64, 64)),
-            nn.ConvTranspose2d(in_channels=64, out_channels=32, kernel_size=1, stride=1, padding=0),
+            nn.ConvTranspose2d(in_channels=64, out_channels=32, kernel_size=6, stride=2, padding=2),
         )
         self.layer5 = nn.Sequential(
-           self.upsample(size=(128, 128)),
-           nn.ConvTranspose2d(in_channels=32, out_channels=3, kernel_size=1, stride=1, padding=0),
+            nn.ConvTranspose2d(in_channels=32, out_channels=3, kernel_size=6, stride=2, padding=2),
         )
 
     def forward(self, x):
@@ -80,6 +76,8 @@ class AutoEncoder(nn.Module):
     def __init__(self):
         super(AutoEncoder, self).__init__()
         self.encoder = Encoder()
+        for param in self.encoder.parameters():
+            param.requires_grad = False
         self.decoder = Decoder()
 
     def forward(self, x):
